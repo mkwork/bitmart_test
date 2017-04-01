@@ -2,12 +2,15 @@
 #include "ui_BitmartTest.h"
 
 #include <QFileSystemModel>
-#include <QWheelEvent> //FIXME: remove
+#include <QWheelEvent>
 #include <QStandardItemModel>
+#include <QItemSelectionModel>
+
 #include <QDebug>
 
 static const QSize MAXIMUM_ICON_SIZE = QSize(200, 200);
 static const QSize MINIMUM_ICON_SIZE = QSize(50, 50);
+static const char* FILTERS="*.png;*.jpg;*.jpeg";
 
 
 BitmartTest::BitmartTest(QWidget *parent) :
@@ -17,18 +20,14 @@ BitmartTest::BitmartTest(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    fileSystem->setRootPath(QString());
+    fileSystem->setRootPath(QString("/home/maxim/skype"));
     fileSystem->setFilter(QDir::AllDirs | QDir::Drives | QDir::NoDotAndDotDot);
     fileSystem->setReadOnly(true);
 
 
 
-    QStandardItemModel* model = new QStandardItemModel();
-    for (int i = 0; i < 20; ++i) {
-        model->appendRow(new QStandardItem(QIcon("/home/maxim/skype/bmtest/1.jpg"),
-                                           QString())
-                         );
-    }
+
+    images = new QStandardItemModel();
 
     ui->fileSystemView->setModel(fileSystem);
     ui->fileSystemView->hideColumn(1);
@@ -38,11 +37,18 @@ BitmartTest::BitmartTest(QWidget *parent) :
 
     ui->imagesView->installEventFilter(this);
     ui->imagesView->setViewMode(QListView::IconMode);
-    ui->imagesView->setIconSize(QSize(200, 200));
-    ui->imagesView->setModel(model);
+    ui->imagesView->setIconSize(MAXIMUM_ICON_SIZE);
+    ui->imagesView->setUniformItemSizes(true);
+    ui->imagesView->setSpacing(10);
+    ui->imagesView->setModel(images);
 
     ui->splitter->setStretchFactor(0, 0);
     ui->splitter->setStretchFactor(1, 3);
+
+    connect(ui->fileSystemView->selectionModel(),
+            SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),
+            this,
+            SLOT(onDirectoryChanged(QModelIndex,QModelIndex)));
 
 
 }
@@ -52,7 +58,35 @@ BitmartTest::~BitmartTest()
     delete ui;
 }
 
-bool BitmartTest::eventFilter(QObject *obj, QEvent *event)
+void BitmartTest::onDirectoryLoaded(const QString &path)
+{
+    qDebug() << path;
+    images->clear();
+    QDir dir(path);
+    QStringList filters = QString(FILTERS).split(';');
+    dir.setNameFilters(filters);
+    QStringList entries = dir.entryList(QDir::Files | QDir::NoDotAndDotDot);
+    qDebug() << entries;
+
+    foreach (QString entry , entries) {
+        QStandardItem* item = new QStandardItem(QIcon(path + "/" + entry),
+                                                QString());
+        item->setTextAlignment(Qt::AlignCenter);
+        images->appendRow(item);
+    }
+}
+
+void BitmartTest::onDirectoryChanged(const QModelIndex& current, const QModelIndex& previous)
+{
+    const QString currentPath = fileSystem->filePath(current);
+    if (currentPath == fileSystem->filePath(previous)) {
+        return;
+    }
+
+    onDirectoryLoaded(currentPath);
+}
+
+bool BitmartTest::eventFilter(QObject* obj, QEvent* event)
 {
 
     if (obj != ui->imagesView)

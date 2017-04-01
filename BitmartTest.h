@@ -5,6 +5,7 @@
 
 class QFileSystemModel;
 class QWheelEvent;
+class QStandardItemModel;
 
 namespace Ui {
 class BitmartTest;
@@ -18,6 +19,11 @@ public:
     explicit BitmartTest(QWidget *parent = 0);
     ~BitmartTest();
 
+protected slots:
+    void onDirectoryLoaded(const QString& path);
+    void onDirectoryChanged(const QModelIndex& current,
+                            const QModelIndex& previous);
+
 protected:
     bool eventFilter(QObject *obj, QEvent *event);
 
@@ -26,6 +32,7 @@ private:
 
     Ui::BitmartTest *ui;
     QFileSystemModel* fileSystem;
+    QStandardItemModel* images;
 };
 
 #endif // BITMARTTEST_H
