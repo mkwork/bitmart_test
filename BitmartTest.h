@@ -3,6 +3,8 @@
 
 #include <QDialog>
 
+class QFileSystemModel;
+
 namespace Ui {
 class BitmartTest;
 }
@@ -17,6 +19,7 @@ public:
 
 private:
     Ui::BitmartTest *ui;
+    QFileSystemModel* fileSystem;
 };
 
 #endif // BITMARTTEST_H
