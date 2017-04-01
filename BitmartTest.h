@@ -4,6 +4,7 @@
 #include <QDialog>
 
 class QFileSystemModel;
+class QWheelEvent;
 
 namespace Ui {
 class BitmartTest;
@@ -17,7 +18,12 @@ public:
     explicit BitmartTest(QWidget *parent = 0);
     ~BitmartTest();
 
+protected:
+    bool eventFilter(QObject *obj, QEvent *event);
+
 private:
+    void processWhellScrollEvent(QWheelEvent* event);
+
     Ui::BitmartTest *ui;
     QFileSystemModel* fileSystem;
 };
