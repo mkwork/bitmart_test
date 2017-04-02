@@ -23,6 +23,7 @@ protected slots:
     void onDirectoryLoaded(const QString& path);
     void onDirectoryChanged(const QModelIndex& current,
                             const QModelIndex& previous);
+    void setLoadingVisible(bool show);
 
 protected:
     bool eventFilter(QObject *obj, QEvent *event);

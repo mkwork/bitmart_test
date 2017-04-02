@@ -50,6 +50,7 @@ BitmartTest::BitmartTest(QWidget *parent) :
             this,
             SLOT(onDirectoryChanged(QModelIndex,QModelIndex)));
 
+    setLoadingVisible(false);
 
 }
 
@@ -84,6 +85,12 @@ void BitmartTest::onDirectoryChanged(const QModelIndex& current, const QModelInd
     }
 
     onDirectoryLoaded(currentPath);
+}
+
+void BitmartTest::setLoadingVisible(bool show)
+{
+    ui->loadingLabel->setVisible(show);
+    ui->progressBar->setVisible(show);
 }
 
 bool BitmartTest::eventFilter(QObject* obj, QEvent* event)
