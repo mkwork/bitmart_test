@@ -10,8 +10,10 @@
 
 #include <QDebug>
 
+namespace {
 static const QSize MAXIMUM_ICON_SIZE = QSize(200, 200);
 static const QSize MINIMUM_ICON_SIZE = QSize(50, 50);
+} //namespace
 
 
 BitmartTest::BitmartTest(QWidget *parent) :
@@ -21,11 +23,9 @@ BitmartTest::BitmartTest(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    fileSystem->setRootPath(QString("/home/maxim/skype"));
+    fileSystem->setRootPath(QString());
     fileSystem->setFilter(QDir::AllDirs | QDir::Drives | QDir::NoDotAndDotDot);
     fileSystem->setReadOnly(true);
-
-
 
 
     images = new QStandardItemModel();
@@ -47,7 +47,7 @@ BitmartTest::BitmartTest(QWidget *parent) :
     ui->splitter->setStretchFactor(1, 3);
 
     loader = new ImagesLoader(this);
-    QThreadPool::globalInstance()->start(loader);
+
 
     connect(ui->fileSystemView->selectionModel(),
             SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),
@@ -63,6 +63,7 @@ BitmartTest::BitmartTest(QWidget *parent) :
     connect(loader, SIGNAL(ready(QPixmap)), this,
             SLOT(onImageReady(QPixmap)), Qt::QueuedConnection);
 
+    QThreadPool::globalInstance()->start(loader);
     setLoadingVisible(false);
 
 }
