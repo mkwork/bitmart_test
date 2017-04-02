@@ -13,8 +13,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        BitmartTest.cpp
+        BitmartTest.cpp \
+    ImagesLoader.cpp
 
-HEADERS  += BitmartTest.h
+HEADERS  += BitmartTest.h \
+    ImagesLoader.h
 
 FORMS    += BitmartTest.ui

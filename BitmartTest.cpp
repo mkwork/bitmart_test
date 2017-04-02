@@ -1,16 +1,17 @@
 #include "BitmartTest.h"
 #include "ui_BitmartTest.h"
+#include "ImagesLoader.h"
 
 #include <QFileSystemModel>
 #include <QWheelEvent>
 #include <QStandardItemModel>
 #include <QItemSelectionModel>
+#include <QThreadPool>
 
 #include <QDebug>
 
 static const QSize MAXIMUM_ICON_SIZE = QSize(200, 200);
 static const QSize MINIMUM_ICON_SIZE = QSize(50, 50);
-static const char* FILTERS="*.png;*.jpg;*.jpeg";
 
 
 BitmartTest::BitmartTest(QWidget *parent) :
@@ -45,10 +46,22 @@ BitmartTest::BitmartTest(QWidget *parent) :
     ui->splitter->setStretchFactor(0, 0);
     ui->splitter->setStretchFactor(1, 3);
 
+    loader = new ImagesLoader(this);
+    QThreadPool::globalInstance()->start(loader);
+
     connect(ui->fileSystemView->selectionModel(),
             SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),
             this,
             SLOT(onDirectoryChanged(QModelIndex,QModelIndex)));
+
+    connect(loader, SIGNAL(count(int)), this, SLOT(onLoadingStart(int)),
+            Qt::QueuedConnection);
+
+    connect(loader, SIGNAL(finished()), this, SLOT(onLoadingFinish()),
+            Qt::QueuedConnection);
+
+    connect(loader, SIGNAL(ready(QPixmap)), this,
+            SLOT(onImageReady(QPixmap)), Qt::QueuedConnection);
 
     setLoadingVisible(false);
 
@@ -57,24 +70,17 @@ BitmartTest::BitmartTest(QWidget *parent) :
 BitmartTest::~BitmartTest()
 {
     delete ui;
+    loader->stop();
+    QThreadPool::globalInstance()->waitForDone();
 }
 
 void BitmartTest::onDirectoryLoaded(const QString &path)
 {
     qDebug() << path;
+    loader->cancel();
     images->clear();
-    QDir dir(path);
-    QStringList filters = QString(FILTERS).split(';');
-    dir.setNameFilters(filters);
-    QStringList entries = dir.entryList(QDir::Files | QDir::NoDotAndDotDot);
-    qDebug() << entries;
+    loader->load(path);
 
-    foreach (QString entry , entries) {
-        QStandardItem* item = new QStandardItem(QIcon(path + "/" + entry),
-                                                QString());
-        item->setTextAlignment(Qt::AlignCenter);
-        images->appendRow(item);
-    }
 }
 
 void BitmartTest::onDirectoryChanged(const QModelIndex& current, const QModelIndex& previous)
@@ -91,6 +97,26 @@ void BitmartTest::setLoadingVisible(bool show)
 {
     ui->loadingLabel->setVisible(show);
     ui->progressBar->setVisible(show);
+}
+
+void BitmartTest::onLoadingStart(int count)
+{
+    if (count > 0) {
+        setLoadingVisible(true);
+        ui->progressBar->setMaximum(count);
+    }
+}
+
+void BitmartTest::onLoadingFinish()
+{
+    setLoadingVisible(false);
+}
+
+void BitmartTest::onImageReady(const QPixmap &pixmap)
+{
+    QStandardItem* item = new QStandardItem(QIcon(pixmap), QString());
+    images->appendRow(item);
+    ui->progressBar->setValue(ui->progressBar->value() + 1);
 }
 
 bool BitmartTest::eventFilter(QObject* obj, QEvent* event)
